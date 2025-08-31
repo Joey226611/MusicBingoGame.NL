@@ -1,373 +1,164 @@
 <!doctype html>
 <html lang="nl">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Music Bingo — Joey (fixed)</title>
-  <style>
-    :root{--bg1:#071026;--accent:#7c3aed;--muted:rgba(255,255,255,0.7)}
-    *{box-sizing:border-box}
-    html,body{height:100%;margin:0;font-family:Inter,system-ui,Arial;color:#fff;background:linear-gradient(180deg,var(--bg1),#031027)}
-    .wrap{max-width:1100px;margin:28px auto;padding:20px;display:grid;grid-template-columns:420px 1fr;gap:18px}
-    .card{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)}
-    h1{margin:0 0 8px 0;font-size:20px}
-    .controls{display:flex;gap:10px}
-    button{border:0;padding:10px 14px;border-radius:10px;font-weight:700;cursor:pointer}
-    .primary{background:linear-gradient(90deg,#7c3aed,#06b6d4);color:#fff}
-    .ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
-    .warn{background:linear-gradient(90deg,#f97316,#ef4444);color:#fff}
-    .status{color:var(--muted);font-size:13px}
-    .big{font-size:40px;font-weight:800}
-    .visual{height:360px;border-radius:12px;overflow:hidden;position:relative}
-    canvas{width:100%;height:100%;display:block}
-    .overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:20}
-    .overlay .box{background:rgba(0,0,0,0.45);padding:18px;border-radius:12px;border:1px solid rgba(255,255,255,0.04);text-align:center}
-    .muted{color:var(--muted)}
-    .debug{font-family:monospace;background:rgba(0,0,0,0.25);padding:10px;border-radius:8px;max-height:180px;overflow:auto;font-size:12px}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-    @media(max-width:900px){.wrap{grid-template-columns:1fr}.visual{height:260px}}
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Music Bingo — Joey</title>
+<style>
+:root{
+  --bg1:#0a0a23;
+  --accent:#7c3aed;
+  --accent2:#06b6d4;
+  --text:#fff;
+  --muted:rgba(255,255,255,0.7);
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html, body{height:100%; font-family: 'Inter', system-ui, sans-serif; background: linear-gradient(180deg, #0a0a23, #03031b); color: var(--text);}
+.container{max-width:1000px; margin:40px auto; padding:20px; display:flex; flex-wrap:wrap; gap:20px; justify-content:center;}
+.card{background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); border-radius:16px; padding:20px; flex:1 1 400px; min-width:320px; backdrop-filter: blur(12px);}
+h1{font-size:24px; margin-bottom:12px;}
+button{padding:12px 18px; border:none; border-radius:12px; font-weight:700; cursor:pointer; background: linear-gradient(90deg,var(--accent),var(--accent2)); color:#fff; transition: all 0.3s ease;}
+button:hover{transform: scale(1.05);}
+.controls{display:flex; gap:12px; flex-wrap:wrap; margin-top:12px;}
+.status{margin-top:10px; color:var(--muted); font-size:14px;}
+.big{font-size:36px; font-weight:800; text-align:center;}
+canvas{width:100%; height:250px; border-radius:12px; display:block; margin-top:20px; background:#02021a;}
+</style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="left">
-      <div class="card">
-        <h1>Music Bingo — Host (debug)</h1>
-        <div class="status">Klik <strong>Activeer audio</strong> als overlay verschijnt (mobiele/Opera/Edge autoplays blokkeren vaak).</div>
-        <div style="height:12px"></div>
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div>
-            <div class="status">Gekozen</div>
-            <div class="big" id="playedCount">0</div>
-            <div class="status muted" id="totalCount">/ 0</div>
-          </div>
-          <div style="text-align:right">
-            <div class="status">Status</div>
-            <div id="stateText" class="status muted">Idle</div>
-          </div>
-        </div>
-        <div style="height:10px"></div>
-        <div class="controls">
-          <button id="startBtn" class="primary">Start</button>
-          <button id="stopBtn" class="ghost">Stop</button>
-          <button id="resetBtn" class="warn">Reset</button>
-        </div>
-        <div style="height:10px"></div>
-        <div class="status">Shortcuts: Spatie/S = Start • Esc/X = Stop • R = Reset</div>
-      </div>
-
-      <div class="card" style="margin-top:12px">
-        <div class="status">Debug & checks</div>
-        <div style="height:8px"></div>
-        <div class="grid">
-          <div>
-            <div class="status">Loaded tracks</div>
-            <div id="tracksList" class="debug">(nog niks geladen)</div>
-          </div>
-          <div>
-            <div class="status">Network / errors</div>
-            <div id="netLog" class="debug">Geen fouten</div>
-          </div>
-        </div>
-      </div>
+<div class="container">
+  <div class="card">
+    <h1>Music Bingo — Host</h1>
+    <div class="big" id="playedCount">0</div>
+    <div class="status" id="totalCount">/ 0</div>
+    <div class="controls">
+      <button id="startBtn">Start</button>
+      <button id="stopBtn">Stop</button>
+      <button id="resetBtn">Reset</button>
     </div>
-
-    <div class="right">
-      <div class="card visual" id="visualWrap">
-        <canvas id="visual"></canvas>
-        <div class="overlay" id="audioOverlay" style="display:none">
-          <div class="box">
-            <strong>🔊 Activeer audio</strong>
-            <div style="height:8px"></div>
-            <div class="status muted">Browsers blokkeren autoplay soms (Opera/Edge). Klik om audio te activeren.</div>
-            <div style="height:12px"></div>
-            <div style="display:flex;gap:8px;justify-content:center">
-              <button id="enableAudioBtn" class="primary">Activeer audio</button>
-              <button id="openFileBtn" class="ghost">Test audio bestand</button>
-            </div>
-            <div style="height:8px"></div>
-            <div class="status muted">Als het bestand niet gevonden wordt: check bestandsnaam (hoofdletters), pad (index.html moet in repo root) en of je Music-map ge-pusht is.</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="card" style="margin-top:12px">
-        <div class="status">Privacy</div>
-        <div class="status muted">Bestandsnamen worden niet getoond. SessionStorage onthoudt welke nummers al gespeeld werden (refresh reset).</div>
-      </div>
-    </div>
+    <div class="status">Shortcuts: Spatie/S = Start • Esc/X = Stop • R = Reset</div>
   </div>
+  <div class="card">
+    <h1>Visualizer</h1>
+    <canvas id="visual"></canvas>
+  </div>
+</div>
+<script>
+const mainMusicFilename = 'Music/main_lofi.mp3';
+let tracks = [];
+let played = [];
+let remaining = [];
+let mainAudio = new Audio(mainMusicFilename);
+mainAudio.loop = true;
+mainAudio.volume = 0.3;
+let gameAudio = new Audio();
+let isPlayingGame = false;
+const playedCountEl = document.getElementById('playedCount');
+const totalCountEl = document.getElementById('totalCount');
+const startBtn = document.getElementById('startBtn');
+const stopBtn = document.getElementById('stopBtn');
+const resetBtn = document.getElementById('resetBtn');
 
-  <script>
-    // ---------- CONFIG ----------
-    const mainMusicFilename = 'Music/main_lofi.mp3'; // zet hier jouw lounge file
-    const TRACKS_FALLBACK = [ 'Music/song1.mp3' ]; // vul dit als je geen Music/tracks.json gebruikt
+const canvas = document.getElementById('visual');
+const ctx = canvas.getContext('2d');
+let audioCtx, analyser, dataArray, rafId;
 
-    // ---------- state ----------
-    let allTracks = [];
-    let remaining = [];
-    let played = [];
+// Load JSON tracks
+async function loadTracks(){
+  try{
+    const resp = await fetch('Music/tracks.json', {cache:'no-store'});
+    const json = await resp.json();
+    tracks = json.map(t=>'Music/'+t);
+    remaining = tracks.slice();
+    totalCountEl.textContent = '/ '+tracks.length;
+    playedCountEl.textContent = played.length;
+    console.log('Tracks loaded:', tracks);
+  }catch(e){ console.error('Kan tracks.json niet laden', e); }
+}
 
-    // audio vars
-    let audioCtx, analyser, dataArray, sourceMain, sourceGame, mainGain, gameGain;
-    let mainAudio = null, gameAudio = null;
-    let rafId = null; let isPlayingGame=false;
+function pickRandomTrack(){
+  if(remaining.length===0) return null;
+  const idx = Math.floor(Math.random()*remaining.length);
+  const t = remaining.splice(idx,1)[0];
+  played.push(t);
+  playedCountEl.textContent = played.length;
+  return t;
+}
 
-    // UI elems
-    const startBtn = document.getElementById('startBtn');
-    const stopBtn = document.getElementById('stopBtn');
-    const resetBtn = document.getElementById('resetBtn');
-    const playedCountEl = document.getElementById('playedCount');
-    const totalCountEl = document.getElementById('totalCount');
-    const stateText = document.getElementById('stateText');
+async function startRound(){
+  if(!audioCtx){ initAudioContext(); }
+  if(isPlayingGame) return;
+  const track = pickRandomTrack();
+  if(!track){ alert('Alle nummers gespeeld!'); return; }
+  isPlayingGame=true;
+  mainAudio.pause();
+  gameAudio.src = track;
+  gameAudio.volume=1;
+  gameAudio.play();
+  gameAudio.onended=()=>{
+    mainAudio.play();
+    isPlayingGame=false;
+  };
+}
 
-    const tracksListEl = document.getElementById('tracksList');
-    const netLogEl = document.getElementById('netLog');
-    const audioOverlay = document.getElementById('audioOverlay');
-    const enableAudioBtn = document.getElementById('enableAudioBtn');
-    const openFileBtn = document.getElementById('openFileBtn');
+function stopRound(){
+  gameAudio.pause();
+  gameAudio.currentTime=0;
+  mainAudio.play();
+  isPlayingGame=false;
+}
 
-    const canvas = document.getElementById('visual');
-    const visualWrap = document.getElementById('visualWrap');
-    const ctx = canvas.getContext('2d');
+function resetGame(){
+  played=[];
+  remaining=tracks.slice();
+  playedCountEl.textContent = played.length;
+}
 
-    function logNet(msg){
-      const now = new Date().toLocaleTimeString();
-      netLogEl.textContent = now + ' — ' + msg + '
-' + netLogEl.textContent;
-      console.log('[NetLog]',msg);
-    }
-    function updateTracksPanel(){
-      tracksListEl.textContent = allTracks.length ? allTracks.join('
-') : '(geen tracks)';
-    }
+startBtn.addEventListener('click', ()=>{
+  if(mainAudio.paused) mainAudio.play();
+  startRound();
+});
+stopBtn.addEventListener('click', stopRound);
+resetBtn.addEventListener('click', resetGame);
 
-    // Normalize path (remove leading ./ and backslashes -> slashes)
-    function normalize(p){ return String(p).replace(/^\.\//,'').replace(/\/g,'/').trim(); }
+// Visualizer
+function initAudioContext(){
+  audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+  analyser = audioCtx.createAnalyser(); analyser.fftSize=256;
+  dataArray = new Uint8Array(analyser.frequencyBinCount);
+  const sourceMain = audioCtx.createMediaElementSource(mainAudio);
+  const sourceGame = audioCtx.createMediaElementSource(gameAudio);
+  const gain = audioCtx.createGain(); gain.gain.value=1;
+  sourceMain.connect(analyser);
+  sourceGame.connect(analyser);
+  analyser.connect(audioCtx.destination);
+  drawVisualizer();
+}
 
-    async function loadTracks(){
-      // try manifest
-      try{
-        const resp = await fetch('Music/tracks.json', {cache:'no-store'});
-        if(resp.ok){
-          const json = await resp.json();
-          if(Array.isArray(json) && json.length>0){
-            allTracks = json.map(t=> normalize(t.startsWith('Music/') ? t : ('Music/' + t)) );
-            logNet('Tracks geladen uit Music/tracks.json ('+allTracks.length+')');
-            updateTracksPanel();
-            return;
-          }
-        } else {
-          logNet('tracks.json niet gevonden (status ' + resp.status + '). Gebruik fallback.');
-        }
-      }catch(e){ logNet('Error bij laden tracks.json, fallback gebruiken.'); }
+function drawVisualizer(){
+  const w=canvas.width, h=canvas.height;
+  ctx.clearRect(0,0,w,h);
+  analyser.getByteFrequencyData(dataArray);
+  const bars=12;
+  const cx=w/2, cy=h/2;
+  for(let i=0;i<bars;i++){
+    const val=dataArray[Math.floor(i*(dataArray.length/bars))]/255;
+    const radius=30+val*100;
+    const angle=(i/bars)*Math.PI*2;
+    const x=cx+Math.cos(angle)*60;
+    const y=cy+Math.sin(angle)*60;
+    ctx.beginPath();
+    ctx.arc(x,y,radius*0.1,0,Math.PI*2);
+    ctx.fillStyle=`rgba(${Math.floor(124+val*130)},${Math.floor(58+val*150)},${Math.floor(237-val*120)},${0.5+val*0.5})`;
+    ctx.fill();
+  }
+  rafId=requestAnimationFrame(drawVisualizer);
+}
 
-      // fallback
-      allTracks = TRACKS_FALLBACK.map(t=> normalize(t.startsWith('Music/') ? t : ('Music/' + t)) );
-      logNet('Fallback tracks gebruikt: ' + allTracks.length);
-      updateTracksPanel();
-    }
+window.addEventListener('resize', ()=>{ canvas.width=canvas.clientWidth; canvas.height=canvas.clientHeight; });
+canvas.width=canvas.clientWidth; canvas.height=canvas.clientHeight;
 
-    function loadSessionPlayed(){
-      try{ played = JSON.parse(sessionStorage.getItem('musicBingo_played')||'[]'); }
-      catch(e){ played = []; }
-    }
-    function saveSessionPlayed(){ sessionStorage.setItem('musicBingo_played', JSON.stringify(played)); }
-    function resetSessionPlayed(){ played = []; saveSessionPlayed(); }
-
-    // check if file exists via fetch (use GET to be sure GitHub Pages returns proper status)
-    async function checkFile(path){
-      try{
-        const res = await fetch(path, {cache:'no-store'});
-        if(res.ok) return {ok:true,status:res.status};
-        return {ok:false,status:res.status};
-      }catch(e){ return {ok:false, status:0, error:String(e)}; }
-    }
-
-    async function initAudioEngine(){
-      if(audioCtx) return;
-      audioCtx = new (window.AudioContext||window.webkitAudioContext)();
-      analyser = audioCtx.createAnalyser(); analyser.fftSize = 1024; dataArray = new Uint8Array(analyser.frequencyBinCount);
-
-      // create audio tags (no crossOrigin to avoid CORS issues on same origin)
-      mainAudio = new Audio(); mainAudio.loop = true; mainAudio.preload = 'auto';
-      gameAudio = new Audio(); gameAudio.preload = 'auto';
-
-      // error listeners
-      mainAudio.addEventListener('error', ()=>{
-        logNet('mainAudio error: ' + (mainAudio.error && mainAudio.error.message ? mainAudio.error.message : JSON.stringify(mainAudio.error)) );
-        showOverlay('Kan main audio niet afspelen — controleer pad / bestandsnaam in je repo.');
-      });
-      gameAudio.addEventListener('error', ()=>{
-        logNet('gameAudio error: ' + (gameAudio.error && gameAudio.error.message ? gameAudio.error.message : JSON.stringify(gameAudio.error)) );
-      });
-
-      try{
-        sourceMain = audioCtx.createMediaElementSource(mainAudio);
-        sourceGame = audioCtx.createMediaElementSource(gameAudio);
-      }catch(e){ logNet('createMediaElementSource failed: '+e); }
-
-      mainGain = audioCtx.createGain(); gameGain = audioCtx.createGain();
-      mainGain.gain.value = 0.32; gameGain.gain.value = 1.0;
-
-      sourceMain.connect(mainGain);
-      sourceGame.connect(gameGain);
-      mainGain.connect(analyser);
-      gameGain.connect(analyser);
-      analyser.connect(audioCtx.destination);
-
-      // visual loop
-      startVisualizerLoop();
-
-      // try autoplay main — if fail, show overlay so user clicks
-      try{
-        // set src immediately (so openFileBtn can test it too)
-        mainAudio.src = mainMusicFilename;
-        const ok = await checkFile(mainMusicFilename);
-        if(!ok.ok){
-          logNet('Main file niet gevonden (' + mainMusicFilename + ') status=' + ok.status);
-          showOverlay('Main file niet gevonden. Controleer of "' + mainMusicFilename + '" exact bestaat in /Music/');
-          return;
-        }
-
-        await mainAudio.play();
-        hideOverlay();
-        logNet('Main lounge muziek gestart automatisch.');
-      }catch(err){
-        logNet('Autoplay main faalde: ' + String(err));
-        showOverlay('Klik om audio te activeren (Opera/Edge blokkeren autoplay).');
-      }
-
-      gameAudio.addEventListener('ended', onGameEnded);
-    }
-
-    function showOverlay(msg){ audioOverlay.style.display = 'flex'; if(msg) logNet(msg); }
-    function hideOverlay(){ audioOverlay.style.display = 'none'; }
-
-    async function enableAudioFromUserGesture(){
-      try{
-        if(!audioCtx) await initAudioEngine();
-        if(audioCtx.state === 'suspended') await audioCtx.resume();
-        if(!mainAudio.src) mainAudio.src = mainMusicFilename;
-        // try play; some browsers require the gesture
-        await mainAudio.play();
-        hideOverlay();
-        logNet('Audio geactiveerd via user gesture.');
-      }catch(e){
-        logNet('enableAudioFromUserGesture faalde: ' + String(e));
-        showOverlay('Kon audio nog niet starten — controleer console en netwerk tab.');
-      }
-    }
-
-    function updateUI(){
-      playedCountEl.textContent = played.length;
-      totalCountEl.textContent = '/ ' + allTracks.length;
-      startBtn.disabled = isPlayingGame || remaining.length===0;
-      stopBtn.disabled = !isPlayingGame;
-    }
-
-    // random pick using Math.random (zoals gevraagd)
-    function pickRandomTrack(){
-      if(remaining.length===0) return null;
-      const i = Math.floor(Math.random() * remaining.length);
-      return remaining.splice(i,1)[0];
-    }
-
-    async function startRound(){
-      if(!audioCtx) await initAudioEngine();
-      if(remaining.length===0){ updateState('Alle nummers gespeeld — reset.'); return; }
-
-      const chosen = pickRandomTrack();
-      if(!chosen) return;
-
-      played.push(chosen); saveSessionPlayed(); updateUI();
-
-      // stop lounge smoothly
-      fadeGain(mainGain, mainGain.gain.value, 0, 0.25);
-
-      isPlayingGame = true;
-      gameAudio.src = chosen;
-      gameAudio.currentTime = 0;
-      try{
-        await gameAudio.play();
-        updateState('Track speelt...');
-      }catch(e){
-        logNet('gameAudio.play() faalde: '+String(e));
-        showOverlay('Browser blokkeert afspelen — klik op Activeer audio.');
-      }
-      updateUI();
-    }
-
-    function stopCurrentTrack(){ if(isPlayingGame){ gameAudio.pause(); gameAudio.currentTime = 0; onGameEnded(); } }
-
-    function onGameEnded(){ fadeGain(mainGain, mainGain.gain.value, 0.32, 0.5); isPlayingGame = false; gameAudio.src = ''; updateState('Idle'); updateUI(); }
-
-    function resetGame(){ if(!confirm('Reset alle gespeelde nummers?')) return; resetSessionPlayed(); loadSessionPlayed(); remaining = allTracks.slice(); updateUI(); updateState('Reset'); }
-
-    function updateState(t){ stateText.textContent = t; }
-
-    function fadeGain(node, from, to, seconds){ if(!node) return; const now = audioCtx.currentTime; node.gain.cancelScheduledValues(now); node.gain.setValueAtTime(from, now); node.gain.linearRampToValueAtTime(to, now + seconds); }
-
-    // visualizer
-    function resizeCanvas(){ const dpr = window.devicePixelRatio || 1; canvas.width = visualWrap.clientWidth * dpr; canvas.height = visualWrap.clientHeight * dpr; ctx.setTransform(dpr,0,0,dpr,0,0); }
-    let lastEnergy = 0;
-    function startVisualizerLoop(){ resizeCanvas(); window.addEventListener('resize', resizeCanvas);
-      function draw(){ if(!analyser){ rafId=requestAnimationFrame(draw); return; } analyser.getByteFrequencyData(dataArray); const w = canvas.width/(window.devicePixelRatio||1); const h = canvas.height/(window.devicePixelRatio||1); ctx.clearRect(0,0,w,h);
-        let sum=0; for(let i=0;i<dataArray.length;i++) sum+=dataArray[i]; const avg = sum/dataArray.length; const glow = Math.min(1, avg/120);
-        const grd = ctx.createLinearGradient(0,0,w,h); grd.addColorStop(0, `rgba(124,58,237,${0.02+glow*0.08})`); grd.addColorStop(1, `rgba(6,182,212,${0.01+glow*0.06})`); ctx.fillStyle = grd; ctx.fillRect(0,0,w,h);
-        const bars=12; const cx=w/2, cy=h/2; for(let i=0;i<bars;i++){ const angle=(i/bars)*Math.PI*2; const val=dataArray[Math.floor(i*(dataArray.length/bars))]/255; const radius=40+val*Math.min(w,h)/3; const x=cx+Math.cos(angle)*(60+val*90); const y=cy+Math.sin(angle)*(60+val*90); ctx.beginPath(); ctx.arc(x,y,8+val*26,0,Math.PI*2); const alpha=0.25+val*0.75; ctx.fillStyle=`rgba(${Math.floor(124+val*130)},${Math.floor(58+val*150)},${Math.floor(237-val*120)},${alpha})`; ctx.fill(); }
-        if(avg>lastEnergy*1.55 && avg>40){ document.querySelector('.wrap').classList.add('flash'); setTimeout(()=>document.querySelector('.wrap').classList.remove('flash'),300); }
-        lastEnergy = 0.9*lastEnergy + 0.1*avg; rafId=requestAnimationFrame(draw);
-      }
-      draw();
-    }
-
-    // on load
-    document.addEventListener('DOMContentLoaded', async ()=>{
-      await loadTracks(); loadSessionPlayed();
-
-      // remove main file from game-list (if present)
-      const normMain = normalize(mainMusicFilename);
-      allTracks = allTracks.map(normalize).filter(t=>t !== normMain);
-      updateTracksPanel();
-
-      remaining = allTracks.filter(t=>!played.includes(t));
-      updateUI();
-
-      startBtn.addEventListener('click', ()=>startRound());
-      stopBtn.addEventListener('click', ()=>stopCurrentTrack());
-      resetBtn.addEventListener('click', ()=>resetGame());
-
-      enableAudioBtn.addEventListener('click', ()=>enableAudioFromUserGesture());
-      openFileBtn.addEventListener('click', async ()=>{
-        const check = await checkFile(mainMusicFilename);
-        if(check.ok) { logNet('Bestand bereikbaar: '+mainMusicFilename+' (status '+check.status+') — probeer overlay Activeer audio te klikken.'); }
-        else { logNet('Bestand NIET bereikbaar: '+mainMusicFilename+' (status '+check.status+') — check naam & pad in repo.'); alert('Bestand niet gevonden. Controleer dat "' + mainMusicFilename + '" exact bestaat en dat index.html in repo root staat.'); }
-      });
-
-      // try init audio (won't autoplay in many browsers)
-      try{ initAudioEngine(); }catch(e){ logNet('initAudioEngine error: '+String(e)); }
-
-      // keyboard shortcuts
-      window.addEventListener('keydown',(e)=>{
-        if(e.code==='Space'||e.key.toLowerCase()==='s'){ e.preventDefault(); if(!isPlayingGame) startRound(); }
-        if(e.key.toLowerCase()==='r'){ if(confirm('Reset alle gespeelde nummers?')) resetGame(); }
-        if(e.key==='Escape'||e.key.toLowerCase()==='x'){ stopCurrentTrack(); }
-      });
-
-    });
-
-    // before unload
-    window.addEventListener('beforeunload', ()=>{ try{ if(rafId) cancelAnimationFrame(rafId); }catch(e){} });
-  </script>
-
-  <!--
-    KORTE TROUBLESHOOTING (doe dit stap-voor-stap):
-    1) Open DevTools (F12) -> Network -> reload. Zoek je main bestand (Music/main_lofi.mp3) en kijk naar status (moet 200).
-    2) Als status 404 of 0: pad is verkeerd of bestand niet ge-pusht. Controleer hoofdletters en of index.html en Music/ zich in dezelfde repo-root bevinden.
-    3) Klik in de UI op "Activeer audio" als overlay verschijnt (Opera/Edge blokkeren autoplay vaak).
-    4) Test "Test audio bestand" knop — die doet een fetch-check en logt status in het debug-paneel.
-    5) Als er nog errors: kopieer console errors (F12 -> Console) en plak ze hier — ik fix het direct.
-  -->
+loadTracks();
+</script>
 </body>
 </html>
