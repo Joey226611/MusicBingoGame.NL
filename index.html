@@ -45,9 +45,14 @@ canvas{width:100%; height:250px; border-radius:12px; display:block; margin-top:2
 </div>
 <script>
 const mainMusicFilename = 'Music/main_lofi.mp3';
-let tracks = [];
+const tracks = [
+  'Music/song1.mp3',
+  'Music/song2.mp3',
+  'Music/song3.mp3',
+  'Music/song4.mp3'
+];
 let played = [];
-let remaining = [];
+let remaining = tracks.slice();
 let mainAudio = new Audio(mainMusicFilename);
 mainAudio.loop = true;
 mainAudio.volume = 0.3;
@@ -63,18 +68,8 @@ const canvas = document.getElementById('visual');
 const ctx = canvas.getContext('2d');
 let audioCtx, analyser, dataArray, rafId;
 
-// Load JSON tracks
-async function loadTracks(){
-  try{
-    const resp = await fetch('Music/tracks.json', {cache:'no-store'});
-    const json = await resp.json();
-    tracks = json.map(t=>'Music/'+t);
-    remaining = tracks.slice();
-    totalCountEl.textContent = '/ '+tracks.length;
-    playedCountEl.textContent = played.length;
-    console.log('Tracks loaded:', tracks);
-  }catch(e){ console.error('Kan tracks.json niet laden', e); }
-}
+totalCountEl.textContent = '/ ' + tracks.length;
+playedCountEl.textContent = played.length;
 
 function pickRandomTrack(){
   if(remaining.length===0) return null;
@@ -85,7 +80,7 @@ function pickRandomTrack(){
   return t;
 }
 
-async function startRound(){
+function startRound(){
   if(!audioCtx){ initAudioContext(); }
   if(isPlayingGame) return;
   const track = pickRandomTrack();
@@ -157,8 +152,6 @@ function drawVisualizer(){
 
 window.addEventListener('resize', ()=>{ canvas.width=canvas.clientWidth; canvas.height=canvas.clientHeight; });
 canvas.width=canvas.clientWidth; canvas.height=canvas.clientHeight;
-
-loadTracks();
 </script>
 </body>
 </html>
